@@ -1,0 +1,19 @@
+# Local builds and game/model audit exports
+dist/
+artifacts/
+*.log
+
+# Dependencies, environment files and credentials
+node_modules/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Editor / OS / Python
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+*.pyc

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roadster 决策驾驶员</title>
+    <link rel="stylesheet" href="popup.css" />
+    <script type="module" src="popup.mjs"></script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand-mark" aria-hidden="true">↗</div>
+      <div class="brand-copy">
+        <h1>Roadster 决策驾驶员</h1>
+        <p>StartLux · 实时决策驾驶</p>
+      </div>
+      <span id="run-state" class="state-chip"><span class="state-dot"></span><span id="run-label">待命</span></span>
+    </header>
+
+    <main>
+      <section class="drive-card" aria-label="驾驶状态">
+        <div class="card-heading"><span class="eyebrow">DRIVING SESSION</span><span id="steps" class="step-count">0 次决策</span></div>
+        <div class="action-row"><div><p class="muted caption">当前动作</p><p id="action" class="action">等待出发</p></div><div class="action-arrow" aria-hidden="true">↗</div></div>
+        <div class="metrics">
+          <div><span class="metric-label">分数</span><strong id="score">—</strong></div>
+          <div><span class="metric-label">距离</span><strong id="distance">—</strong></div>
+          <div><span class="metric-label">响应</span><strong id="latency">—</strong></div>
+          <div><span class="metric-label">置信度</span><strong id="confidence">—</strong></div>
+        </div>
+        <p id="model-status" class="model-line">实际模型：等待接口返回</p>
+        <p id="telemetry-status" class="model-line">游戏状态：等待观测</p>
+        <p id="clock-status" class="model-line">实时驾驶 · 原生游戏时钟</p>
+        <p id="realtime-status" class="model-line" hidden></p>
+        <p id="target-status" class="model-line">不按分数停止</p>
+      </section>
+
+      <div class="primary-actions">
+        <button id="start" type="button" class="button button-primary">开始实时驾驶 <span aria-hidden="true">↗</span></button>
+        <button id="stop" type="button" class="button button-stop" disabled>停止</button>
+        <button id="step" type="button" class="button button-small" title="冻结游戏，只执行一次模型动作，成绩不计入实时驾驶">逐步实验</button>
+      </div>
+      <p id="notice" class="notice" role="status" aria-live="polite">开始后弹窗会自动关闭；决策记录在游戏页面下方，向下滚动查看。</p>
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <details class="settings" open>
+        <summary><span>模型连接与驾驶设置</span><span class="summary-arrow" aria-hidden="true">⌄</span></summary>
+        <form id="config-form">
+          <label for="endpoint-preset">接口入口</label>
+          <select id="endpoint-preset">
+            <option value="http://127.0.0.1:18080/v1/systemone">本机隧道 · 127.0.0.1:18080</option>
+            <option value="http://127.0.0.1:18081/v1/systemone">本机转发 · 127.0.0.1:18081</option>
+            <option value="https://api.typesafe.ai/v1/systemone">TypeSafe 官方接口</option>
+            <option value="custom">其他受支持入口</option>
+          </select>
+          <label for="endpoint">System One URL</label>
+          <input id="endpoint" name="endpoint" type="url" required spellcheck="false" value="http://127.0.0.1:18080/v1/systemone" placeholder="受支持的 System One 接口" />
+          <p class="field-help endpoint-help">HTTP 支持 127.0.0.1 / localhost，端口 18080 / 18081；HTTPS 支持 api.typesafe.ai。</p>
+
+          <label for="api-key">API Key <span id="key-state" class="field-meta">本次浏览器会话</span></label>
+          <div class="key-row"><input id="api-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="输入密钥，仅保存在会话中" /><button id="clear-key" type="button" class="button button-small">清除</button></div>
+
+          <label for="model">模型名称 <span class="field-meta">可选</span></label>
+          <input id="model" name="model" type="text" spellcheck="false" placeholder="留空，使用服务端默认模型" />
+
+          <label for="clock-mode">游戏时钟</label>
+          <select id="clock-mode" name="clockMode"><option value="realtime">实时驾驶 · 默认</option><option value="step">逐步实验 · 等待时冻结</option></select>
+          <p id="clock-help" class="field-help endpoint-help">游戏按原生时钟持续运行，模型等待期间也会前进；过期响应不执行。</p>
+          <div class="field-grid">
+            <div><label id="step-ms-label" for="step-ms">普通输入保持 / 毫秒</label><input id="step-ms" name="stepMs" type="number" min="50" max="1000" step="10" value="200" required /></div>
+            <div><label for="max-steps">最多决策次数</label><input id="max-steps" name="maxSteps" type="number" min="1" max="10000" step="1" value="300" required /></div>
+          </div>
+          <label for="target-score">目标分数</label>
+          <input id="target-score" name="targetScore" type="number" min="0" max="10000000" step="1" value="0" required />
+          <p class="field-help">填 0 不按分数停止；正数达标后停止驾驶输入。实时模式下原游戏继续运行。</p>
+          <div class="field-grid">
+            <div><label for="think-mode">思考模式</label><select id="think-mode" name="thinkMode"><option value="off">关闭思考</option><option value="auto">自动</option></select></div>
+            <div><label for="think-budget">思考预算</label><input id="think-budget" name="thinkBudget" type="number" min="0" max="32768" step="1" value="0" disabled /></div>
+          </div>
+          <p id="thinking-help" class="field-help endpoint-help">思考参数仅用于局域网兼容服务；实际支持以服务端为准。</p>
+          <label class="checkbox-label" for="auto-retry"><input id="auto-retry" name="autoRetry" type="checkbox" /><span>游戏结束后自动再来一局</span></label>
+          <div class="settings-actions"><button id="test" type="button" class="button button-secondary">测试模型连接</button><button id="save" type="submit" class="button button-quiet">保存设置</button></div>
+          <p class="field-help">连接测试会发送一次简单决策请求，并可能产生模型用量。</p>
+        </form>
+      </details>
+
+      <section class="history-section" aria-label="最近决策">
+        <div class="section-heading"><h2>最近决策</h2><span id="runs" class="muted">0 局</span></div>
+        <button id="export-run" type="button" class="button button-small">导出本局记录</button>
+        <ol id="history" class="history"><li class="empty-history">开始后，这里会显示模型的驾驶记录。</li></ol>
+      </section>
+
+      <footer>
+        <p>读取游戏结构化状态，发送给你配置的模型接口；不发送截图或其他网页内容。接口可能按服务端设置归档请求。</p>
+        <p>默认实时驾驶沿用原生游戏时钟，模型等待期间继续前进；每次只有一个请求，过期响应不执行。开始后自动收起弹窗，详细记录在游戏下方；逐步实验单独冻结模拟。</p>
+      </footer>
+    </main>
+  </body>
+</html>
