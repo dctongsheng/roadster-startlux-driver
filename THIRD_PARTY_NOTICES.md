@@ -6,9 +6,12 @@
 
 - 外部游戏入口：[https://roadster-rush.ai.studio/](https://roadster-rush.ai.studio/)。
 - 扩展在使用者打开的游戏页面中通过其现有结构化接口读取状态、提交原生动作，游戏仍由该站点加载运行。
-- 本仓库不分发原游戏 JavaScript 包、Three.js 等游戏依赖、图片、音频、游戏截图或其他游戏素材，也不提供包含原游戏的离线版本。
+- 本仓库不分发原游戏 JavaScript 包、Three.js 等游戏依赖或可复用的游戏资源包，也不提供包含原游戏的离线版本。
+- `docs/media/` 中的截图与 GIF、Release 中的演示视频记录实际游戏运行，仅用于展示扩展效果及游戏过程。游戏画面、角色、车辆外观、音频等第三方内容仍归相应权利人；本项目的 MIT 许可不将这些内容重新授权为 MIT。
 - 条件预测与控制适配是本项目对已观察接口及行为的独立实现，不代表游戏作者授权本项目重新许可原游戏。
 - 游戏、车辆外观及 Tesla / Roadster 等相关名称或标识归各自权利人所有。本项目与 Tesla 或游戏作者无官方隶属、赞助或认可关系。
+
+Gameplay screenshots, GIFs in `docs/media/`, and the demo video hosted in Releases show actual gameplay. Third-party visuals, vehicle designs, audio, and trademarks remain the property of their respective owners and are not relicensed under this project's MIT license. The repository does not distribute the original game program or a reusable game asset bundle. This project has no official affiliation with Tesla or the game's author.
 
 ## StartLux / System One / TypeSafe
 

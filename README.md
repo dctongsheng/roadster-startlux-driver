@@ -1,15 +1,52 @@
 # Roadster StartLux Driver
 
+[简体中文](README.md) · [English](README.en.md)
+
 [![CI](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml/badge.svg)](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.4.3-22b8b0.svg)](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.3)
 
-让 StartLux / System One 兼容决策服务实时驾驶 [Roadster Rush](https://roadster-rush.ai.studio/) 的 Chrome / Edge Manifest V3 扩展。当前版本 **0.4.3**。
+**让 StartLux 实时驾驶，在游戏画面中看见模型、决策耗时和当前动作。**
 
-扩展读取游戏结构化状态，把完整的 11 项动作及条件预测交给模型，原样提交仍然有效的模型选择。默认使用原生游戏时钟：等待模型响应时车辆继续行驶，不暂停等模型。
+这是一个用于 [Roadster Rush](https://roadster-rush.ai.studio/) 的 Chrome / Edge Manifest V3 扩展，连接 StartLux / System One 兼容决策服务。游戏保持原生实时运行，模型在后台异步决策；右侧小卡片把当前有效指令及车辆真实状态呈现在一起。当前版本 **0.4.3**。
 
-右侧小卡片突出显示 **StartLux**、服务端报告的模型规模、往返耗时 **ms**、置信度及实际思考遥测；「指令」和原生「车辆」状态分别显示。过期指令立即清除，详细记录在游戏页面下方。[HUD 规则](docs/realtime-hud.md) · [架构与接口](docs/architecture.md)
+## 实际运行演示
 
-本仓库只提供浏览器扩展、测试和文档，**不包含模型后端、模型权重、API Key、原游戏代码或素材**。需要自行准备受支持的决策服务与现有 Key。服务返回的模型名是接口报告值，不证明具体权重来源、参数量或官方身份；本项目不是 Tesla、Roadster Rush 或模型服务的官方产品。
+![StartLux 实时驾驶 Roadster Rush：游戏全景与右侧决策卡片](docs/media/live-driving.jpg)
+
+*本次使用公开版 0.4.3 插件实时驾驶的浏览器截图。卡片位于右侧上部，中央道路、车辆和原生操作区保持完整。*
+
+| 当前指令有效 | 指令到期，等待下一次决策 |
+| --- | --- |
+| ![StartLux 决策卡片近景：模型名称、毫秒耗时、当前指令和原生车辆状态](docs/media/startlux-hud.jpg) | ![指令到期后的轻提示：StartLux、上次响应耗时和决策中](docs/media/startlux-waiting.jpg) |
+
+*两张近景来自同一次真实浏览器运行：有效指令展示自己的响应参数；到期后清除动作，只保留明确标为「上次」的耗时与等待提示。*
+
+### 游戏录屏
+
+[![Roadster Rush 游戏录屏预览，点击观看完整视频](docs/media/demo-preview.gif)](https://github.com/dctongsheng/roadster-startlux-driver/releases/download/v0.4.3/startlux-roadster-demo.mp4)
+
+*上方插件截图与本段视频来自不同运行：视频是用户提供的游戏录屏，不包含决策卡片。点击动图观看带声音的完整视频。*
+
+**[观看 / 下载游戏录屏 MP4](https://github.com/dctongsheng/roadster-startlux-driver/releases/download/v0.4.3/startlux-roadster-demo.mp4)** · [下载插件](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.3)
+
+## 你能实时看见什么
+
+| 展示内容 | 含义 |
+| --- | --- |
+| **StartLux / 模型规模** | 突出当前响应的模型名称；服务返回名称带有 `27b` 等规模信息时显示对应标记 |
+| **决策耗时 · ms** | 当前指令对应请求的客户端往返耗时，包含网络和服务端处理 |
+| **当前指令** | 最新一条已接受、尚在提示时限内的模型选择，如翻滚、喷气或换道 |
+| **原生车辆状态** | 独立读取实际翻滚方向、排队动作、换道以及喷气等输入保持状态 |
+| **置信度 / 思考状态** | 显示接口返回的置信度和实际思考遥测；缺失信息如实标为未知 |
+
+「指令」与「车辆」分别显示。例如，模型刚提交左翻滚时，车辆可能仍在完成右翻滚；卡片保留这个区别，不把指令回执当成动作完成。**ms 是请求往返耗时，不是纯推理耗时；置信度不是动作成功率。**
+
+等待模型时游戏继续运行。新指令替换旧指令，提示时限到期立即清除；没有有效指令时收成一条轻提示，耗时会明确标为「上次」。停止接管或终局时隐藏卡片。详细预测、历史和审计记录留在游戏页面下方，点击「详情」才滚动过去。
+
+扩展将完整的 **11 项动作及同口径条件预测**交给模型，原样提交仍然有效的模型选择。实时显示采用独立的 100 ms 只读采样，不额外调用模型或改变驾驶策略。[HUD 规则](docs/realtime-hud.md) · [架构与接口](docs/architecture.md)
+
+本仓库提供浏览器扩展、测试和文档；模型后端、模型权重及 API Key 需自行准备。演示图片和视频来自实际游戏运行，第三方游戏素材的许可边界见[第三方说明](THIRD_PARTY_NOTICES.md)。服务返回的模型名是接口报告值，不证明具体权重来源、参数量或官方身份；本项目不是 Tesla、Roadster Rush 或模型服务的官方产品。
 
 ## 安装与驾驶
 

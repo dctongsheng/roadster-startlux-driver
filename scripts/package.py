@@ -10,7 +10,7 @@ output = root / "dist" / f"roadster-startlux-driver-v{version}.zip"
 output.parent.mkdir(exist_ok=True)
 
 files = [root / name for name in (
-    "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "package.json",
+    "README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "package.json",
     "scripts/check.mjs", "scripts/package.py",
 )]
 for directory in ("extension", "docs", "tests"):
