@@ -99,7 +99,9 @@ function updatePreset() {
 
 function renderConfig(config) {
   currentConfig = { ...defaults, ...config };
-  $('key-state').textContent = currentConfig.hasKey ? '已保存 · 浏览器会话内有效' : '本次浏览器会话';
+  $('key-state').textContent = currentConfig.hasKey
+    ? currentConfig.keySource === 'env' ? '本机 .env · 自动载入' : '已保存 · 浏览器会话内有效'
+    : '会话输入 / 本机 .env';
   $('api-key').placeholder = currentConfig.hasKey ? '已保存密钥；填写可替换' : '输入密钥，仅保存在会话中';
   if (loaded && dirty) return;
   $('endpoint').value = currentConfig.endpoint;
@@ -313,7 +315,7 @@ $('think-mode').addEventListener('change', () => {
 $('clock-mode').addEventListener('change', updateClockMode);
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  void runOperation(null, '设置已保存。密钥只在本次浏览器会话内保留。', { save: true });
+  void runOperation(null, '设置已保存。支持从本机 .env 自动载入；手动输入的密钥仅保留在会话中。', { save: true });
 });
 $('start').addEventListener('click', () => void runOperation('START', () => currentConfig.clockMode === 'realtime'
   ? '实时驾驶已开始，决策记录在游戏页面下方。请保持游戏标签页可见。'
@@ -323,7 +325,7 @@ $('step').addEventListener('click', () => void runOperation('STEP', '逐步实�
 $('test').addEventListener('click', () => void runOperation('TEST_CONNECTION', '模型连接成功，已收到有效决策响应。', { save: true }));
 $('clear-key').addEventListener('click', () => {
   $('api-key').value = '';
-  void runOperation('CLEAR_KEY', '已清除本次浏览器会话保存的密钥。');
+  void runOperation('CLEAR_KEY', '已清除会话密钥并停用 .env 自动载入；保存设置可重新载入本机文件。');
 });
 $('export-run').addEventListener('click', exportRun);
 

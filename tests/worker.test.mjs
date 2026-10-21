@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 let instance = 0;
-async function setup(storedConfig, waitForConfig, withGame = false) {
-  const local = { config: storedConfig }, session = {};
+async function setup(storedConfig, waitForConfig, withGame = false, options = {}) {
+  const local = { config: storedConfig, ...options.local }, session = { ...options.session };
   const id = 'test-extension';
   const listeners = {};
   const injected = [], pageMessages = [], storageWrites = [], bridgeOps = [];
@@ -90,6 +90,38 @@ test('only the extension popup can send commands, and the key never enters persi
   assert(!JSON.stringify(status).includes(key));
   await f.send({ type: 'CLEAR_KEY' });
   assert.equal(f.session.apiKey, undefined);
+});
+
+test('env bootstrap survives fresh sessions, respects overrides, and clear stays disabled across restarts', async () => {
+  const oldFetch = globalThis.fetch;
+  const secret = 'dummy-env-secret-for-test';
+  let reads = 0;
+  globalThis.fetch = async url => {
+    reads++;
+    assert.equal(url, 'chrome-extension://test-extension/.env');
+    return { ok: true, text: async () => `STARTLUX_API_KEY=${secret}` };
+  };
+  try {
+    const first = await setup();
+    const status = await first.send({ type: 'STATUS' });
+    assert.equal(first.session.apiKey, secret);
+    assert.equal(status.config.keySource, 'env');
+    assert(!JSON.stringify(status).includes(secret));
+    assert(!JSON.stringify(first.local).includes(secret));
+    const restart = await setup();
+    await restart.send({ type: 'STATUS' });
+    assert.equal(restart.session.apiKey, secret, 'a fresh browser session restores from the local file');
+    await restart.send({ type: 'CLEAR_KEY' });
+    assert.equal(restart.session.apiKey, undefined);
+    const disabled = await setup(undefined, undefined, false, { local: restart.local });
+    assert.equal((await disabled.send({ type: 'STATUS' })).config.hasKey, false);
+    assert.equal((await disabled.send({ type: 'SAVE_CONFIG', config: {} })).config.keySource, 'env');
+    const before = reads;
+    const manual = await setup(undefined, undefined, false, { session: { apiKey: 'manual-session-key' } });
+    assert.equal((await manual.send({ type: 'STATUS' })).config.keySource, 'session');
+    assert.equal(manual.session.apiKey, 'manual-session-key');
+    assert.equal(reads, before, 'a manual session key takes priority over the file');
+  } finally { globalThis.fetch = oldFetch; }
 });
 
 test('initial SAVE_CONFIG with an existing session key resolves before any game state exists, including after an idle STOP', { timeout: 1000 }, async () => {

@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml/badge.svg)](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.3-22b8b0.svg)](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.3)
+[![Version](https://img.shields.io/badge/version-0.4.4-22b8b0.svg)](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.4)
 
 **让 StartLux 实时驾驶，在游戏画面中看见模型、决策耗时和当前动作。**
 
-这是一个用于 [Roadster Rush](https://roadster-rush.ai.studio/) 的 Chrome / Edge Manifest V3 扩展，连接 StartLux / System One 兼容决策服务。游戏保持原生实时运行，模型在后台异步决策；右侧小卡片把当前有效指令及车辆真实状态呈现在一起。当前版本 **0.4.3**。
+这是一个用于 [Roadster Rush](https://roadster-rush.ai.studio/) 的 Chrome / Edge Manifest V3 扩展，连接 StartLux / System One 兼容决策服务。游戏保持原生实时运行，模型在后台异步决策；右侧小卡片把当前有效指令及车辆真实状态呈现在一起。当前版本 **0.4.4**。
 
 ## 实际运行演示
 
@@ -66,6 +66,20 @@
 
 保持游戏标签页处于前台。原游戏在窗口失焦或页面隐藏时可能主动暂停；扩展检测到原生暂停会退出接管。返回游戏后可再次点击开始。它与「逐步实验」主动冻结模拟是不同机制，详见[时钟边界](docs/architecture.md#时钟与暂停)。
 
+## 本机 .env：重开浏览器免输 Key
+
+[详细配置与排错说明](docs/local-env.md)
+
+在**已加载的扩展目录**中，将 `.env.example` 复制为 `.env`，填写：
+
+```dotenv
+STARTLUX_API_KEY=YOUR_EXISTING_API_KEY
+```
+
+然后在 `chrome://extensions` 重新加载扩展。浏览器新会话会自动从该文件载入 Key，弹窗显示「本机 .env · 自动载入」；手动输入的会话 Key 优先。修改文件后请重新加载扩展。
+
+`.env` 是本机明文文件，已被 Git 和公开 ZIP 打包排除；不要分享这个文件。Key 只由扩展后台读取，不发到游戏页面或导出记录。点击「清除」会删除会话副本并停用自动载入；再次「保存设置」可从文件恢复。
+
 ## 受支持的接口
 
 | 类型 | URL |
@@ -95,7 +109,7 @@
 
 ## 数据与权限
 
-- API Key 只存于 `chrome.storage.session`，仅扩展受信任上下文可访问；不写入持久配置、页面卡片或导出记录。清除 Key 会停止驾驶并删除会话副本，浏览器会话结束后需重新输入。
+- 手动输入的 API Key 只存于 `chrome.storage.session`，仅扩展受信任上下文可访问。可选的本机 `.env` 保留明文 Key，并在新浏览器会话自动载入；两者均不写入持久配置、页面卡片或导出记录。清除 Key 会停止驾驶、删除会话副本并停用文件自动载入。
 - 其他连接和驾驶设置保存在 `chrome.storage.local`。运行状态会保存在扩展会话中，并在游戏页面内显示。
 - 游戏遥测和动作题发送到所配置的模型接口，不发送截图或其他网页内容。服务端可能按自身规则归档请求。
 - 下方列表默认只显示已提交指令；导出保留当前缓冲区内的未提交回执与审计字段，最多 200 条决策，并不代表无限历史。
@@ -111,7 +125,7 @@ npm test
 npm run package
 ```
 
-检查和单元测试不调用真实模型、不启动原游戏。打包生成 `dist/roadster-startlux-driver-v0.4.3.zip`，解压后仍选择其中的 `extension` 目录加载。原游戏内部接口变化后，适配可能失效；请提交不含 Key 的错误信息与复现步骤。
+检查和单元测试不调用真实模型、不启动原游戏。打包生成 `dist/roadster-startlux-driver-v0.4.4.zip`，解压后仍选择其中的 `extension` 目录加载。原游戏内部接口变化后，适配可能失效；请提交不含 Key 的错误信息与复现步骤。
 
 ## 开源许可
 

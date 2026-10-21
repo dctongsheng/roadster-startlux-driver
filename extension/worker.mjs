@@ -1,9 +1,20 @@
 import { ACTIONS, requestDecision, validateEndpoint } from './decision.mjs';
 import { DEFAULT_CONFIG, validateConfig, Driver } from './driver.mjs';
+import { readLocalKey } from './local-env.mjs';
 
 const GAME_ORIGIN = 'https://roadster-rush.ai.studio';
 let configWarning = '';
 let config = { ...DEFAULT_CONFIG };
+async function restoreLocalKey(explicit = false) {
+  const session = await chrome.storage.session.get('apiKey');
+  if (session.apiKey) return;
+  const { localEnvDisabled } = await chrome.storage.local.get('localEnvDisabled');
+  if (localEnvDisabled && !explicit) return;
+  const apiKey = await readLocalKey(chrome.runtime);
+  if (!apiKey) return;
+  await chrome.storage.session.set({ apiKey, apiKeySource: 'env' });
+  if (explicit) await chrome.storage.local.remove('localEnvDisabled');
+}
 const configReady = (async () => {
   await chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
   const { config } = await chrome.storage.local.get('config');
@@ -12,7 +23,7 @@ const configReady = (async () => {
     configWarning = '旧设置无效，已恢复默认值；请重新保存接口设置。';
     return { ...DEFAULT_CONFIG };
   }
-})().then(saved => { config = saved; }).catch(() => {
+})().then(async saved => { config = saved; await restoreLocalKey(); }).catch(() => {
   configWarning = '无法读取旧设置，已使用默认值；请重新保存接口设置。';
 });
 let persisted = Promise.resolve();
@@ -237,7 +248,8 @@ const livePublisher = new LivePublisher({
 
 async function publicConfig() {
   const { apiKey } = await chrome.storage.session.get('apiKey');
-  return { ...config, hasKey: !!apiKey };
+  const { apiKeySource } = await chrome.storage.session.get('apiKeySource');
+  return { ...config, hasKey: !!apiKey, keySource: apiKey ? apiKeySource === 'env' ? 'env' : 'session' : null };
 }
 
 async function handle(message) {
@@ -265,8 +277,9 @@ async function handle(message) {
       const key = message.config?.apiKey;
       if (key !== undefined && key !== '') {
         if (typeof key !== 'string' || key.length > 8192 || /[\r\n]/.test(key)) throw new Error('API Key 格式无效。');
-        await chrome.storage.session.set({ apiKey: key.trim() });
+        await chrome.storage.session.set({ apiKey: key.trim(), apiKeySource: 'session' });
       }
+      await restoreLocalKey(true);
       config = next;
       configWarning = '';
       await chrome.storage.local.set({ config });
@@ -275,6 +288,8 @@ async function handle(message) {
     case 'CLEAR_KEY':
       await driver.stop();
       await chrome.storage.session.remove('apiKey');
+      await chrome.storage.session.remove('apiKeySource');
+      await chrome.storage.local.set({ localEnvDisabled: true });
       return { ok: true, config: await publicConfig() };
     case 'START':
     case 'STEP': {

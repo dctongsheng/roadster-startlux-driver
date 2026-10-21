@@ -1,6 +1,6 @@
 {
   "name": "roadster-startlux-driver",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Realtime asynchronous StartLux decision driver for Roadster Rush, packaged as a Chrome extension.",
   "license": "MIT",
   "repository": {

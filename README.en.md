@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml/badge.svg)](https://github.com/dctongsheng/roadster-startlux-driver/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.3-22b8b0.svg)](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.3)
+[![Version](https://img.shields.io/badge/version-0.4.4-22b8b0.svg)](https://github.com/dctongsheng/roadster-startlux-driver/releases/tag/v0.4.4)
 
 **Watch StartLux drive in real time—with the model, decision latency, and current action visible in the game.**
 
-A Chrome / Edge Manifest V3 extension for [Roadster Rush](https://roadster-rush.ai.studio/), connected to a StartLux / System One-compatible decision service. The game runs on its native real-time clock while model decisions arrive asynchronously. A small card on the right shows the current valid instruction alongside the car's actual state. Current version: **0.4.3**.
+A Chrome / Edge Manifest V3 extension for [Roadster Rush](https://roadster-rush.ai.studio/), connected to a StartLux / System One-compatible decision service. The game runs on its native real-time clock while model decisions arrive asynchronously. A small card on the right shows the current valid instruction alongside the car's actual state. Current version: **0.4.4**.
 
 ## Live demo
 
@@ -66,6 +66,20 @@ This repository provides the browser extension, tests, and documentation. Supply
 
 Keep the game tab in the foreground. The game may pause itself when its window loses focus or the page becomes hidden. The extension releases control when it detects a native pause; start driving again after returning to the game. This is separate from the explicit step experiment that freezes simulation while waiting for the model. See [clock and pause behavior](docs/architecture.md#时钟与暂停).
 
+## Local .env: no repeated Key entry
+
+[Setup and troubleshooting guide](docs/local-env.md)
+
+Copy `.env.example` to `.env` inside the **extension directory you loaded**, then set:
+
+```dotenv
+STARTLUX_API_KEY=YOUR_EXISTING_API_KEY
+```
+
+Reload the extension at `chrome://extensions`. Fresh browser sessions automatically load the file; the popup shows the local `.env` source. A manually entered session Key takes priority. Reload the extension after editing the file.
+
+The local file stores the Key in plain text and is excluded from Git and public ZIP builds. Do not share it. Only the extension background reads it; the Key is never sent to the game page or exported records. **Clear** removes the session copy and disables automatic loading; **Save settings** can load the file again.
+
 ## Supported endpoints
 
 | Type | URL |
@@ -95,7 +109,7 @@ Predictions approximate observed objects and physical behavior. Latency, traffic
 
 ## Data and permissions
 
-- API Keys are stored only in `chrome.storage.session`, accessible to trusted extension contexts. They are not written to persistent configuration, the page card, or exported records. Clearing the Key stops driving and removes the session copy; a new browser session requires re-entering it.
+- Manually entered API Keys use `chrome.storage.session`, accessible to trusted extension contexts. An optional local `.env` stores the Key in plain text and restores it in fresh browser sessions. Neither source writes the Key into persistent configuration, the page card, or exported records. Clearing the Key stops driving, removes the session copy, and disables file auto-loading.
 - Other connection and driving settings use `chrome.storage.local`. Runtime status is kept in the extension session and displayed in the game page.
 - Game telemetry and the action question are sent to the configured model endpoint. The extension does not send screenshots or other webpage content. The service may archive requests under its own rules.
 - The history list shows submitted instructions by default. Exports retain unsubmitted receipts and audit fields from the current bounded buffer, up to 200 decisions; this is not an unlimited history.
@@ -111,7 +125,7 @@ npm test
 npm run package
 ```
 
-Checks and unit tests do not call a live model or launch the game. Packaging produces `dist/roadster-startlux-driver-v0.4.3.zip`; after extraction, load its `extension` directory. Changes to the game's internal interface may break compatibility. Report errors with reproduction steps and omit your API Key.
+Checks and unit tests do not call a live model or launch the game. Packaging produces `dist/roadster-startlux-driver-v0.4.4.zip`; after extraction, load its `extension` directory. Changes to the game's internal interface may break compatibility. Report errors with reproduction steps and omit your API Key.
 
 ## License
 

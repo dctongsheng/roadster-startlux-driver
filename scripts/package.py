@@ -12,6 +12,7 @@ output.parent.mkdir(exist_ok=True)
 files = [root / name for name in (
     "README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "package.json",
     "scripts/check.mjs", "scripts/package.py",
+    "extension/.env.example",
 )]
 for directory in ("extension", "docs", "tests"):
     files.extend(
